@@ -1,0 +1,16 @@
+.checkout-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    min-width: 800px;
+    height: 100%;
+}
+
+.buttonPay {
+    background: #eb2f2f;
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    font-size: 16px;
+    cursor: pointer;
+}
