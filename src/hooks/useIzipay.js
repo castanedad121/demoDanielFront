@@ -1,7 +1,7 @@
 const useIzipay = async (transactionId, orderData) => {
   try {
     const response = await fetch(
-      "https://demodaniel-izipay.onrender.com//api/token",
+      "https://demodaniel-izipay.onrender.com/api/token",
       {
         method: "POST",
         headers: {

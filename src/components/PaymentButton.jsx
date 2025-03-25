@@ -143,9 +143,9 @@ const PaymentButton = ({
         container: "#iframe-payment",
         showButtonProcessForm: true,
         redirectUrls: {
-          onSuccess: "http://localhost:5173/",
-          onError: "http://localhost:5173/",
-          onCancel: "http://localhost:5173/",
+          onSuccess: "https://demodanielfront.onrender.com/",
+          onError: "https://demodanielfront.onrender.com/",
+          onCancel: "https://demodanielfront.onrender.com/",
         },
       },
 
