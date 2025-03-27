@@ -12,6 +12,7 @@ import { ProcessType } from "./ProcessType";
 // icons
 import { MdCopyAll } from "react-icons/md";
 import { RiArrowDownSLine } from "react-icons/ri";
+import { IpnUrlInput } from "./IpnUrlInput";
 
 const Checkout = () => {
   const [viewResponse, setViewResponse] = useState(true);
@@ -26,6 +27,7 @@ const Checkout = () => {
   const [viewLanguageSelector, setViewLanguageSelector] = useState(false);
   const [viewLogoInput, setViewLogoInput] = useState(false);
   const [viewThemeColor, setViewThemeColor] = useState(false);
+  const [viewIpnUrlInput, setViewIpnUrlInput] = useState(false);
   const [viewCustomFields, setViewCustomFields] = useState(false);
 
   const [merchantBuyerId, setMerchantBuyerId] = useState("MC2149");
@@ -74,6 +76,8 @@ const Checkout = () => {
     hColor: "bg-[#FF4240]",
   });
 
+  const [urlIpn, setUrlIpn] = useState("");
+
   const [customData, setCustomData] = useState({
     field1: "",
     field2: "",
@@ -110,6 +114,7 @@ const Checkout = () => {
       setViewLanguageSelector(newState);
       setViewLogoInput(newState);
       setViewThemeColor(newState);
+      setViewIpnUrlInput(newState);
       setViewCustomFields(newState);
       return newState;
     });
@@ -195,6 +200,12 @@ const Checkout = () => {
           viewThemeColor={viewThemeColor}
           setViewThemeColor={setViewThemeColor}
         />
+        <IpnUrlInput
+          urlIpn={urlIpn}
+          setUrlIpn={setUrlIpn}
+          viewIpnUrlInput={viewIpnUrlInput}
+          setViewIpnUrlInput={setViewIpnUrlInput}
+        />
         <CustomFields
           customData={customData}
           setCustomData={setCustomData}
@@ -215,6 +226,7 @@ const Checkout = () => {
           processType={processType}
           cardToken={cardToken}
           merchantBuyerId={merchantBuyerId}
+          urlIpn={urlIpn}
         />
         <div className="flex flex-col p-2 justify-center items-center border rounded-md border-[#00A09D] w-full md:w-[700px] my-2 mx-4">
           <div className="flex border-b-[1px] border-[#00A09D]  w-full justify-between items-center">

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { createDispatchHook, useDispatch, useSelector } from "react-redux";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { fetchToken, setOrder } from "../store/orderSlice";
 import generateOrder from "../utils/generateOrder";
 import removeKeyRecursive from "../utils/removeKeyRecursive";
@@ -17,29 +17,14 @@ const PaymentButton = ({
   processType,
   cardToken,
   merchantBuyerId,
+  urlIpn,
 }) => {
-  const { currency, merchantCode } = configCurrency;
-  const {
-    field1,
-    field2,
-    field3,
-    field4,
-    field5,
-    field6,
-    field7,
-    field8,
-    field9,
-    field10,
-  } = customData;
-  const { logo, theme, hColor } = appearance;
-  const { init, control } = lenguageSelect;
-  const { pay, register, payRegister, payToken } = actionForm;
-  const { popUp, embebed, redirect } = integrationMethod;
   const dispatch = useDispatch();
   const { transactionId, orderNumber, token, status } = useSelector(
     (state) => state.order
   );
 
+  // Generar transactionId y token cuando cambia algún valor del estado
   useEffect(() => {
     const { transactionId, orderNumber } = generateOrder();
     dispatch(setOrder({ transactionId, orderNumber }));
@@ -52,12 +37,11 @@ const PaymentButton = ({
           merchantCode: configCurrency.merchantCode,
           orderNumber,
           publicKey: "VErethUtraQuxas57wuMuquprADrAHAb",
-          amount: amount,
+          amount,
         },
       })
     );
   }, [
-    dispatch,
     integrationMethod,
     amount,
     actionForm,
@@ -65,29 +49,29 @@ const PaymentButton = ({
     lenguageSelect,
     appearance,
     customData,
-    merchantCode,
     configCurrency,
     processType,
     cardToken,
     merchantBuyerId,
+    urlIpn,
+    dispatch,
   ]);
 
   const handlePayment = () => {
     const containerIframe = document.querySelector("#container-iframe");
-    if (embebed) containerIframe.style.backgroundColor = "white";
+    if (integrationMethod.embebed)
+      containerIframe.style.backgroundColor = "white";
+
     const paymentMessage = document.querySelector("#payment-message");
     const objetConfig = document.querySelector("#objet-config");
-    // Limpiar mensaje de pago
     paymentMessage.innerHTML = "";
 
-    // Verifica que el contenedor existe antes de ejecutar LoadForm
     const container = document.querySelector("#iframe-payment");
     if (!container) {
       console.error("El contenedor #iframe-payment no existe en el DOM.");
       return;
     }
 
-    // Verifica que el SDK esté cargado antes de continuar
     if (!token || !window.Izipay) {
       console.error("Izipay no está cargado o el token es inválido.");
       return;
@@ -95,30 +79,28 @@ const PaymentButton = ({
 
     const paymentConfig = {
       transactionId,
-
-      action: register
+      action: actionForm.register
         ? window.Izipay.enums.payActions.REGISTER
-        : payRegister
+        : actionForm.payRegister
         ? window.Izipay.enums.payActions.PAY_REGISTER
-        : payToken
+        : actionForm.payToken
         ? window.Izipay.enums.payActions.PAY_TOKEN
         : window.Izipay.enums.payActions.PAY,
-      merchantCode: merchantCode,
+      merchantCode: configCurrency.merchantCode,
       order: {
         orderNumber,
-        currency: currency,
-        amount: amount,
-        merchantBuyerId: merchantBuyerId,
+        currency: configCurrency.currency,
+        amount,
+        merchantBuyerId,
         dateTimeTransaction: getCurrentTransactionTime(),
         payMethod:
           arrayMethodPay.length > 1
             ? arrayMethodPay.join(", ")
             : arrayMethodPay[0] || "",
-        processType: processType,
+        processType,
       },
-
       token: {
-        cardToken: cardToken,
+        cardToken,
       },
       billing: {
         firstName: "Daniel",
@@ -133,59 +115,52 @@ const PaymentButton = ({
         document: "12345678",
         documentType: window.Izipay.enums.documentType.DNI,
       },
-      language: { init: init, showControlMultiLang: control },
+      language: {
+        init: lenguageSelect.init,
+        showControlMultiLang: lenguageSelect.control,
+      },
       render: {
-        typeForm: embebed
+        typeForm: integrationMethod.embebed
           ? window.Izipay.enums.typeForm.EMBEDDED
-          : redirect
+          : integrationMethod.redirect
           ? window.Izipay.enums.typeForm.REDIRECT
           : window.Izipay.enums.typeForm.POP_UP,
-        container: "#iframe-payment",
+        ...(integrationMethod.embebed && { container: "#iframe-payment" }),
         showButtonProcessForm: true,
-        redirectUrls: {
-          onSuccess: "https://demodanielfront.onrender.com/",
-          onError: "https://demodanielfront.onrender.com/",
-          onCancel: "https://demodanielfront.onrender.com/",
-        },
+        ...(integrationMethod.redirect && {
+          redirectUrls: {
+            onSuccess: "https://demodanielfront.onrender.com/",
+            onError: "https://demodanielfront.onrender.com/",
+            onCancel: "https://demodanielfront.onrender.com/",
+          },
+        }),
       },
-
+      urlIPN: urlIpn,
       appearance: {
-        logo: logo,
-        theme: theme,
+        logo: appearance.logo,
+        theme: appearance.theme,
       },
-
-      customFields: [
-        { name: "field1", value: field1 },
-        { name: "field2", value: field2 },
-        { name: "field3", value: field3 },
-        { name: "field4", value: field4 },
-        { name: "field5", value: field5 },
-        { name: "field6", value: field6 },
-        { name: "field7", value: field7 },
-        { name: "field8", value: field8 },
-        { name: "field9", value: field9 },
-        { name: "field10", value: field10 },
-      ],
+      customFields: Object.entries(customData).map(([key, value]) => ({
+        name: key,
+        value,
+      })),
     };
 
     console.log("🟢 Configuración enviada a Izipay:", paymentConfig);
 
     const checkout = new window.Izipay({ config: paymentConfig });
 
-    console.log("🔹 Contenedor de pago detectado:", container);
-    console.log("🟢 Configuración enviada a Izipay:", paymentConfig);
     const callbackResponsePayment = (response) => {
-      console.log("🔹 Respuesta de Izipay:", response); // ✅ Ver en la consola
+      console.log("🔹 Respuesta de Izipay:", response);
 
       if (paymentMessage) {
         let formattedResponse = removeKeyRecursive(response, "payloadHttp");
-
-        // Mostrar el JSON formateado en el frontend
         paymentMessage.innerHTML = JSON.stringify(formattedResponse, null, 2);
         objetConfig.innerHTML = JSON.stringify(paymentConfig, null, 2);
         containerIframe.style.display = "none";
       }
     };
+
     checkout.LoadForm({
       authorization: token,
       keyRSA: "RSA",
@@ -196,14 +171,14 @@ const PaymentButton = ({
   return (
     <button
       onClick={handlePayment}
-      className={`w-max ${hColor}  py-1 px-4 text-base cursor-pointer hover:${hColor} rounded-sm hover:scale-95`}
+      className={`w-max ${appearance.hColor} py-1 px-4 text-base cursor-pointer hover:${appearance.hColor} rounded-sm hover:scale-95`}
       disabled={status === "loading"}
     >
       {status === "loading"
         ? "Loading..."
         : amount === ""
         ? "Ingresar Monto"
-        : `${currency} ${amount} →`}
+        : `${configCurrency.currency} ${amount} →`}
     </button>
   );
 };
