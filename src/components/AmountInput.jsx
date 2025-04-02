@@ -62,7 +62,7 @@ export const AmountInput = ({
         <div className="w-full flex gap-2 justify-evenly py-3">
           <h2
             id={window.Izipay.enums.currency.PER}
-            data-merchantcode="4001834"
+            data-merchantcode="4004353"
             className={
               currency === window.Izipay.enums.currency.PER
                 ? "w-32 text-[#1A90FF] bg-[#17213B] text-center rounded-sm py-1"

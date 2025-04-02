@@ -37,7 +37,7 @@ const Checkout = () => {
   );
   const [configCurrency, setConfigCurrency] = useState({
     currency: window.Izipay.enums.currency.PER,
-    merchantCode: "4001834",
+    merchantCode: "4004353",
   });
   const [lenguageSelect, setLenguageSelect] = useState({
     init: window.Izipay.enums.langInit.ESP,
