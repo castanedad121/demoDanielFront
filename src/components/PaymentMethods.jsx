@@ -5,6 +5,7 @@ import yapeIcon from "../assets/icon-mini-yape.svg";
 import milesIcon from "../assets/Miles.png";
 import ibkAppIcon from "../assets/plin-interbank-dark.svg";
 import { RiArrowDownSLine } from "react-icons/ri";
+
 export const PaymentMethods = ({
   methodPay,
   setMethodPay,
@@ -13,11 +14,10 @@ export const PaymentMethods = ({
 }) => {
   const areAllMethodsSelected = (methods) => {
     return Object.entries(methods)
-      .filter(([key]) => key !== "all") // Ignorar "all"
-      .every(([_, value]) => value[0]); // Verificar si todos están activos
+      .filter(([key]) => key !== "all")
+      .every(([_, value]) => value[0]);
   };
 
-  // 🔹 Maneja la selección de métodos de pago
   const handleMethodPay = (methodPaySelect) => {
     setMethodPay((prev) => {
       let updatedMethods;
@@ -44,7 +44,6 @@ export const PaymentMethods = ({
           ],
         };
 
-        // Si todos los métodos están seleccionados, activa "Todos"
         updatedMethods.all = [
           areAllMethodsSelected(updatedMethods),
           window.Izipay.enums.showMethods.ALL,
@@ -55,120 +54,59 @@ export const PaymentMethods = ({
     });
   };
 
+  const methods = [
+    { id: "card", label: "Tarjeta", icon: creditCardIcon, imgClass: "h-7" },
+    { id: "qr", label: "QR", icon: qrIcon, imgClass: "h-7" },
+    { id: "miles", label: "Millas", icon: milesIcon, imgClass: "h-7" },
+    { id: "yape", label: "Yape", icon: yapeIcon, imgClass: "h-6" },
+    { id: "ibk_app", label: "Plin", icon: ibkAppIcon, imgClass: "h-7" },
+    { id: "apple_pay", label: "Apple Pay", icon: applePayIcon, imgClass: "h-12" },
+  ];
+
   return (
-    <div className="w-full flex flex-col  border-b-[1px] border-[#1A90FF]">
-      <div className="flex justify-between items-center">
-        <h2 className=" text-[#1A90FF] pb-2">Métodos de Pago:</h2>
+    <div className="config-section">
+      <div
+        className="section-header"
+        onClick={() => setViewPaymentMethods(!viewPaymentMethods)}
+      >
+        <h2>💳 Métodos de pago</h2>
         <RiArrowDownSLine
-          className={`size-6 pb-1 hover:cursor-pointer hover:scale-110 text-[#1A90FF] hover:text-[#FFFF]
-               ${!viewPaymentMethods && "rotate-180 pb-0 pt-1"}`}
-          onClick={() => {
-            setViewPaymentMethods(!viewPaymentMethods);
-          }}
+          className={`arrow-icon ${!viewPaymentMethods ? "collapsed" : ""}`}
         />
       </div>
       <div
-        className={`w-full flex  rounded-tr-md border-r-[1px] border-t-[1px]  border-[#1A90FF] justify-evenly ${
-          viewPaymentMethods ? "block" : "hidden"
+        className={`section-content ${
+          !viewPaymentMethods ? "hidden-section" : ""
         }`}
       >
-        <div className="flex items-center">
+        <div className="flex items-center gap-2 px-1 mb-3">
           <input
             id="all"
             type="checkbox"
-            value=""
-            className="w-4 h-4 text-blue-600 focus:ring-blue-600 ring-offset-gray-800 focus:ring-2 bg-gray-700 border-gray-600"
+            className="config-checkbox"
             checked={methodPay.all[0]}
             onChange={(e) => handleMethodPay(e.currentTarget.id)}
           />
-          <label className="ms-2 text-sm font-light text-gray-300">Todos</label>
+          <label className="text-sm text-slate-600 dark:text-gray-400 font-medium">
+            Seleccionar todos
+          </label>
         </div>
-
-        <div className="w-full flex gap-1 justify-evenly my-3">
-          <div
-            id="card"
-            className={
-              methodPay.card[0]
-                ? "flex flex-col justify-center items-center rounded-sm cursor-pointer bg-[#17213B] hover:bg-transparent text-[#1A90FF] hover:text-white pt-2 px-2"
-                : "flex flex-col justify-center items-center rounded-sm cursor-pointer hover:bg-[#17213B] hover:text-[#1A90FF] pt-2 px-2"
-            }
-            onClick={(e) => handleMethodPay(e.currentTarget.id)}
-          >
-            <div className="flex flex-col justify-center items-center h-8 overflow-hidden">
-              <img src={creditCardIcon} className="h-8" alt="Credit Card" />
+        <div className="flex flex-wrap gap-2 px-1 justify-center">
+          {methods.map((m) => (
+            <div
+              key={m.id}
+              id={m.id}
+              className={`method-card ${
+                methodPay[m.id][0] ? "active" : "inactive"
+              }`}
+              onClick={(e) => handleMethodPay(e.currentTarget.id)}
+            >
+              <div className="flex items-center justify-center h-8 overflow-hidden">
+                <img src={m.icon} className={m.imgClass} alt={m.label} />
+              </div>
+              <p>{m.label}</p>
             </div>
-            <p className="font-light">Tarjeta</p>
-          </div>
-          <div
-            id="qr"
-            className={
-              methodPay.qr[0]
-                ? "flex flex-col justify-center items-center rounded-sm cursor-pointer bg-[#17213B] hover:bg-transparent text-[#1A90FF] hover:text-white pt-2 px-2"
-                : "flex flex-col justify-center items-center rounded-sm cursor-pointer hover:bg-[#17213B] hover:text-[#1A90FF] pt-2 px-2"
-            }
-            onClick={(e) => handleMethodPay(e.currentTarget.id)}
-          >
-            <div className="flex flex-col justify-center items-center h-8 overflow-hidden">
-              <img src={qrIcon} className="h-8" alt="Credit Card" />
-            </div>
-            <p className="font-light">QR</p>
-          </div>
-          <div
-            id="miles"
-            className={
-              methodPay.miles[0]
-                ? "flex flex-col justify-center items-center rounded-sm cursor-pointer bg-[#17213B] hover:bg-transparent text-[#1A90FF] hover:text-white pt-2 px-2"
-                : "flex flex-col justify-center items-center rounded-sm cursor-pointer hover:bg-[#17213B] hover:text-[#1A90FF] pt-2 px-2"
-            }
-            onClick={(e) => handleMethodPay(e.currentTarget.id)}
-          >
-            <div className="h-8 overflow-hidden flex justify-center items-center bg-transparent ">
-              <img src={milesIcon} className="h-8" alt="Credit Card" />
-            </div>
-            <p className="font-light">Millas</p>
-          </div>
-          <div
-            id="yape"
-            className={
-              methodPay.yape[0]
-                ? "flex flex-col justify-center items-center rounded-sm cursor-pointer bg-[#17213B] hover:bg-transparent text-[#1A90FF] hover:text-white pt-2 px-2"
-                : "flex flex-col justify-center items-center rounded-sm cursor-pointer hover:bg-[#17213B] hover:text-[#1A90FF] pt-2 px-2"
-            }
-            onClick={(e) => handleMethodPay(e.currentTarget.id)}
-          >
-            <div className="h-8 overflow-hidden flex justify-center items-center">
-              <img src={yapeIcon} className="h-[28px]" alt="Credit Card" />
-            </div>
-            <p className="font-light">Yape</p>
-          </div>
-          <div
-            id="ibk_app"
-            className={
-              methodPay.ibk_app[0]
-                ? "flex flex-col justify-center items-center rounded-sm cursor-pointer bg-[#17213B] hover:bg-transparent text-[#1A90FF] hover:text-white pt-2 px-2"
-                : "flex flex-col justify-center items-center rounded-sm cursor-pointer hover:bg-[#17213B] hover:text-[#1A90FF] pt-2 px-2"
-            }
-            onClick={(e) => handleMethodPay(e.currentTarget.id)}
-          >
-            <div className="h-8 overflow-hidden flex justify-center items-center">
-              <img src={ibkAppIcon} className="h-8" alt="Credit Card" />
-            </div>
-            <p className="font-light">Plin - Interbank</p>
-          </div>
-          <div
-            id="apple_pay"
-            className={
-              methodPay.apple_pay[0]
-                ? "flex flex-col justify-center items-center rounded-sm cursor-pointer bg-[#17213B] hover:bg-transparent text-[#1A90FF] hover:text-white pt-2 px-2"
-                : "flex flex-col justify-center items-center rounded-sm cursor-pointer hover:bg-[#17213B] hover:text-[#1A90FF] pt-2 px-2"
-            }
-            onClick={(e) => handleMethodPay(e.currentTarget.id)}
-          >
-            <div className="h-8 overflow-hidden flex justify-center items-center">
-              <img src={applePayIcon} className="h-16" alt="Credit Card" />
-            </div>
-            <p className="font-light">Apple Pay</p>
-          </div>
+          ))}
         </div>
       </div>
     </div>

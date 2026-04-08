@@ -17,8 +17,8 @@ export const LanguageSelector = ({
       setLenguageSelect((prev) => ({
         ...prev,
         init: window.Izipay.enums.langInit.ESP,
-        ESP: !prev.ESP,
-        ENG: !prev.ENG,
+        ESP: true,
+        ENG: false,
       }));
     }
 
@@ -26,64 +26,55 @@ export const LanguageSelector = ({
       setLenguageSelect((prev) => ({
         ...prev,
         init: window.Izipay.enums.langInit.ENG,
-        ESP: !prev.ESP,
-        ENG: !prev.ENG,
+        ESP: false,
+        ENG: true,
       }));
     }
   };
+
   return (
-    <div className="w-full flex flex-col  border-b-[1px] border-[#1A90FF]">
-      <div className="flex justify-between items-center">
-        <h2 className=" text-[#1A90FF] pb-2">Opciones de idioma:</h2>
+    <div className="config-section">
+      <div
+        className="section-header"
+        onClick={() => setViewLanguageSelector(!viewLanguageSelector)}
+      >
+        <h2>🌐 Opciones de idioma</h2>
         <RiArrowDownSLine
-          className={`size-6 pb-1 hover:cursor-pointer hover:scale-110 text-[#1A90FF] hover:text-[#FFFF]
-               ${!viewLanguageSelector && "rotate-180 pb-0 pt-1"}`}
-          onClick={() => {
-            setViewLanguageSelector(!viewLanguageSelector);
-          }}
+          className={`arrow-icon ${!viewLanguageSelector ? "collapsed" : ""}`}
         />
       </div>
       <div
-        className={`w-full flex  rounded-tr-md border-r-[1px] border-t-[1px]  border-[#1A90FF] justify-evenly ${
-          viewLanguageSelector ? "block" : "hidden"
+        className={`section-content ${
+          !viewLanguageSelector ? "hidden-section" : ""
         }`}
       >
-        <div className="w-full flex gap-1 justify-evenly my-3">
-          <div className="flex items-center">
+        <div className="flex flex-wrap items-center gap-3 px-1">
+          <div className="flex items-center gap-2">
             <input
               id="control"
               type="checkbox"
-              value=""
-              className="w-4 h-4 text-blue-600 focus:ring-blue-600 ring-offset-gray-800 focus:ring-2 bg-gray-700 border-gray-600"
+              className="config-checkbox"
               checked={lenguageSelect.control}
               onChange={(e) => handleLenguage(e.target.id)}
             />
-            <label className="ms-2 text-sm font-light text-gray-300 text-nowrap">
-              Control para elegir
+            <label className="text-sm font-medium text-slate-600 dark:text-gray-400 whitespace-nowrap">
+              Selector de idioma visible
             </label>
           </div>
-          <h2
-            id="ESP"
-            className={
-              lenguageSelect.ESP
-                ? "w-32 text-[#1A90FF] bg-[#17213B] text-center rounded-sm py-1 h-8 hover:bg-transparent hover:text-white "
-                : "w-32 text-center rounded-sm cursor-pointer hover:bg-[#17213B] hover:text-[#1A90FF] py-1 h-8"
-            }
-            onClick={(e) => handleLenguage(e.target.id)}
-          >
-            Español
-          </h2>
-          <h2
-            id="ENG"
-            className={
-              lenguageSelect.ENG
-                ? "w-32 text-[#1A90FF] bg-[#17213B] text-center rounded-sm py-1 h-8 hover:bg-transparent hover:text-white"
-                : "w-32 text-center rounded-sm cursor-pointer hover:bg-[#17213B] hover:text-[#1A90FF] py-1 h-8"
-            }
-            onClick={(e) => handleLenguage(e.target.id)}
-          >
-            Inglés
-          </h2>
+          <div className="flex gap-2">
+            <button
+              className={`pill-btn ${lenguageSelect.ESP ? "active" : "inactive"}`}
+              onClick={() => handleLenguage("ESP")}
+            >
+              🇪🇸 Español
+            </button>
+            <button
+              className={`pill-btn ${lenguageSelect.ENG ? "active" : "inactive"}`}
+              onClick={() => handleLenguage("ENG")}
+            >
+              🇬🇧 Inglés
+            </button>
+          </div>
         </div>
       </div>
     </div>

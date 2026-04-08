@@ -9,12 +9,13 @@ import { LogoInput } from "./LogoInput";
 import { ThemeColor } from "./ThemeColor";
 import { CustomFields } from "./CustomFields";
 import { ProcessType } from "./ProcessType";
+import { BillingInfo } from "./BillingInfo";
 // icons
 import { MdCopyAll } from "react-icons/md";
 import { RiArrowDownSLine } from "react-icons/ri";
 import { IpnUrlInput } from "./IpnUrlInput";
 
-const Checkout = () => {
+const Checkout = ({ appSettings }) => {
   const [viewResponse, setViewResponse] = useState(true);
   const [viewObjetConfig, setViewObjetConfig] = useState(true);
   const [viewAllCustom, setViewAllCustom] = useState(false);
@@ -29,6 +30,7 @@ const Checkout = () => {
   const [viewThemeColor, setViewThemeColor] = useState(false);
   const [viewIpnUrlInput, setViewIpnUrlInput] = useState(false);
   const [viewCustomFields, setViewCustomFields] = useState(false);
+  const [viewBillingInfo, setViewBillingInfo] = useState(false);
 
   const [merchantBuyerId, setMerchantBuyerId] = useState("MC2149");
   const [cardToken, setCardToken] = useState("");
@@ -36,8 +38,8 @@ const Checkout = () => {
     window.Izipay.enums.processType.AUTHORIZATION
   );
   const [configCurrency, setConfigCurrency] = useState({
-    currency: window.Izipay.enums.currency.PER,
-    merchantCode: "4004353",
+    currency: "PEN",
+    merchantCode: appSettings?.credentials?.PEN?.merchantCode || "4004353",
   });
   const [lenguageSelect, setLenguageSelect] = useState({
     init: window.Izipay.enums.langInit.ESP,
@@ -69,6 +71,7 @@ const Checkout = () => {
     register: false,
     payRegister: false,
     payToken: false,
+    payCardSelector: false,
   });
   const [appearance, setAppearance] = useState({
     logo: "",
@@ -77,6 +80,25 @@ const Checkout = () => {
   });
 
   const [urlIpn, setUrlIpn] = useState("");
+
+  const [cardSelectorData, setCardSelectorData] = useState({
+    documentType: "DNI",
+    document: "",
+  });
+
+  const [billingData, setBillingData] = useState({
+    firstName: "Daniel",
+    lastName: "Castañeda",
+    email: "jwick@izipay.pe",
+    phoneNumber: "989339999",
+    street: "calle el demo",
+    city: "Lima",
+    state: "Lima",
+    country: "PE",
+    postalCode: "00001",
+    document: "12345678",
+    documentType: "DNI",
+  });
 
   const [customData, setCustomData] = useState({
     field1: "",
@@ -97,12 +119,11 @@ const Checkout = () => {
     const text = document.getElementById(id)?.innerText;
     if (text) {
       navigator.clipboard.writeText(text);
-      setCopiedMessage(id); // Guarda el id para mostrar el mensaje en el lugar correcto
-
-      // Ocultar el mensaje después de 2 segundos
+      setCopiedMessage(id);
       setTimeout(() => setCopiedMessage(""), 2000);
     }
   };
+
   const handleViewAllCustom = () => {
     setViewAllCustom((prev) => {
       const newState = !prev;
@@ -116,6 +137,7 @@ const Checkout = () => {
       setViewThemeColor(newState);
       setViewIpnUrlInput(newState);
       setViewCustomFields(newState);
+      setViewBillingInfo(newState);
       return newState;
     });
   };
@@ -133,18 +155,19 @@ const Checkout = () => {
   }, [methodPay]);
 
   return (
-    <div className="w-full flex md:flex-row flex-col gap-0 md:items-start items-center justify-around">
-      <section className="flex flex-col gap-2 items-center md:w-1/2 p-4 border rounded-md border-[#1A90FF] mx-2">
-        <div className="flex border-b-[1px] border-[#1A90FF]  w-full justify-between items-center">
-          <h2 className="text-slate-200 pb-1">
-            Customización del objeto Config:
+    <div className="w-full flex md:flex-row flex-col gap-4 md:items-start items-center justify-center px-4 pb-8">
+      {/* Left Column: Settings Panel */}
+      <section className="glass-panel flex flex-col gap-0 md:w-[520px] w-full p-5 shadow-2xl transition-all duration-500">
+        <div className="p-5 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50/30 dark:bg-transparent rounded-t-2xl">
+          <h2 className="text-slate-900 dark:text-white font-bold text-sm tracking-tight">
+            ⚡ Configuración del objeto Config
           </h2>
-          <RiArrowDownSLine
-            className={`size-6 pb-1 hover:cursor-pointer hover:scale-110 hover:text-[#1A90FF] ${
-              !viewAllCustom && "rotate-180 pb-0 pt-1"
-            }`}
+          <button
+            className="text-xs font-bold px-4 py-1.5 rounded-full bg-blue-600/10 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 hover:bg-blue-600/20 transition-all shadow-sm"
             onClick={handleViewAllCustom}
-          />
+          >
+            {viewAllCustom ? "Colapsar todo" : "Expandir todo"}
+          </button>
         </div>
         <AmountInput
           amount={amount}
@@ -153,6 +176,7 @@ const Checkout = () => {
           setConfigCurrency={setConfigCurrency}
           viewAmountInput={viewAmountInput}
           setViewAmountInput={setViewAmountInput}
+          appSettings={appSettings}
         />
         <IntegrationMethods
           integrationMethod={integrationMethod}
@@ -175,6 +199,8 @@ const Checkout = () => {
           setMerchantBuyerId={setMerchantBuyerId}
           viewFormActions={viewFormActions}
           setViewFormActions={setViewFormActions}
+          cardSelectorData={cardSelectorData}
+          setCardSelectorData={setCardSelectorData}
         />
         <PaymentMethods
           methodPay={methodPay}
@@ -206,6 +232,12 @@ const Checkout = () => {
           viewIpnUrlInput={viewIpnUrlInput}
           setViewIpnUrlInput={setViewIpnUrlInput}
         />
+        <BillingInfo
+          billingData={billingData}
+          setBillingData={setBillingData}
+          viewBillingInfo={viewBillingInfo}
+          setViewBillingInfo={setViewBillingInfo}
+        />
         <CustomFields
           customData={customData}
           setCustomData={setCustomData}
@@ -213,7 +245,9 @@ const Checkout = () => {
           setViewCustomFields={setViewCustomFields}
         />
       </section>
-      <section className="flex flex-col items-center md:w-1/2">
+
+      {/* Right Panel - Payment + Output */}
+      <section className="flex flex-col items-center md:w-[520px] w-full gap-4">
         <PaymentButton
           integrationMethod={integrationMethod}
           amount={amount}
@@ -227,77 +261,78 @@ const Checkout = () => {
           cardToken={cardToken}
           merchantBuyerId={merchantBuyerId}
           urlIpn={urlIpn}
+          cardSelectorData={cardSelectorData}
+          billingData={billingData}
+          appSettings={appSettings}
         />
-        <div className="flex flex-col p-2 justify-center items-center border rounded-md border-[#00A09D] w-full md:w-[700px] my-2 mx-4">
-          <div className="flex border-b-[1px] border-[#00A09D]  w-full justify-between items-center">
-            <h2 className="text-slate-200 pb-1">Objeto Config:</h2>
-            <div className="flex gap-1">
+
+        {/* Config Output */}
+        <div className="output-panel w-full shadow-lg border-emerald-500/10 dark:border-white/5">
+          <div className="output-panel-header">
+            <h2 className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
+              📄 Objeto Config
+            </h2>
+            <div className="flex gap-2">
               <MdCopyAll
-                id="copyconfig"
-                className="size-6 pb-1 hover:cursor-pointer hover:scale-110 hover:text-[#00A09D]"
+                className="size-5 text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer transition-colors"
                 onClick={() => handleCopy("objet-config")}
               />
               <RiArrowDownSLine
-                className={`size-6 pb-1 hover:cursor-pointer hover:scale-110 hover:text-[#00A09D] ${
-                  !viewObjetConfig && "rotate-180 pb-0 pt-1"
+                className={`size-5 text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer transition-all ${
+                  !viewObjetConfig && "rotate-180"
                 }`}
-                onClick={() => {
-                  setViewObjetConfig(!viewObjetConfig);
-                }}
+                onClick={() => setViewObjetConfig(!viewObjetConfig)}
               />
             </div>
           </div>
           <pre
             id="objet-config"
-            className={`relative w-full p-2 font-light text-slate-300 text-sm overflow-y-auto max-h-[225px] ${
+            className={`relative w-full p-4 font-mono text-slate-950 dark:text-slate-300 text-xs overflow-y-auto max-h-[250px] font-medium ${
               viewObjetConfig ? "block" : "hidden"
             }`}
           >
-            {/* ✅ Mensaje centrado dentro del <pre> */}
             {copiedMessage === "objet-config" && (
-              <div className="absolute bottom-0 right-0 -translate-x-1/8 -translate-y-1/8 bg-black text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fade-in">
-                ¡Texto copiado! ✅
-              </div>
+              <div className="copy-toast">¡Copiado! ✅</div>
             )}
           </pre>
         </div>
-        <div className="flex flex-col p-2 justify-center items-center border rounded-md border-[#FF4240] w-full md:w-[700px] my-2 mx-4 ">
-          <div className="flex border-b-[1px] border-[#FF4240]  w-full justify-between items-center">
-            <h2 className="text-slate-200 pb-1">Response:</h2>
-            <div className="flex gap-1">
+
+        {/* Response Output */}
+        <div className="output-panel response w-full shadow-lg border-red-500/10 dark:border-white/5">
+          <div className="output-panel-header">
+            <h2 className="text-sm font-bold text-red-600 dark:text-red-400">
+              📨 Response
+            </h2>
+            <div className="flex gap-2">
               <MdCopyAll
-                id="copyresponse"
-                className="size-6 pb-1 hover:cursor-pointer hover:scale-110 hover:text-[#FF4240]"
+                className="size-5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 cursor-pointer transition-colors"
                 onClick={() => handleCopy("payment-message")}
               />
               <RiArrowDownSLine
-                className={`size-6 pb-1 hover:cursor-pointer hover:scale-110 hover:text-[#FF4240] ${
-                  !viewResponse && "rotate-180 pb-0 pt-1"
+                className={`size-5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 cursor-pointer transition-all ${
+                  !viewResponse && "rotate-180"
                 }`}
-                onClick={() => {
-                  setViewResponse(!viewResponse);
-                }}
+                onClick={() => setViewResponse(!viewResponse)}
               />
             </div>
           </div>
           <pre
             id="payment-message"
-            className={`relative w-full p-2 font-light text-slate-300 text-sm overflow-y-auto max-h-[225px] ${
+            className={`relative w-full p-4 font-mono text-slate-950 dark:text-slate-300 text-xs overflow-y-auto max-h-[250px] font-medium ${
               viewResponse ? "block" : "hidden"
             }`}
           >
-            {/* ✅ Mensaje centrado dentro del <pre> */}
             {copiedMessage === "payment-message" && (
-              <div className="absolute bottom-0 right-0 -translate-x-1/8 -translate-y-1/8 bg-black text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fade-in">
-                ¡Texto copiado! ✅
-              </div>
+              <div className="copy-toast">¡Copiado! ✅</div>
             )}
           </pre>
         </div>
 
         <div
           id="container-iframe"
-          className=" w-min hidden overflow-hidden rounded-md p-4"
+          className={`relative z-10 w-full md:w-[520px] bg-white rounded-2xl overflow-hidden p-4 sm:p-6 shadow-xl transition-all duration-300 mt-2 ${
+            integrationMethod.embebed ? "block" : "hidden"
+          }`}
         >
           <div id="iframe-payment"></div>
         </div>

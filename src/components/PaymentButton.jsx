@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchToken, setOrder } from "../store/orderSlice";
+import { fetchToken, fetchSignature, setOrder, clearSignature } from "../store/orderSlice";
 import generateOrder from "../utils/generateOrder";
 import removeKeyRecursive from "../utils/removeKeyRecursive";
 import getCurrentTransactionTime from "../utils/getCurrentTransactionTime";
@@ -18,49 +18,68 @@ const PaymentButton = ({
   cardToken,
   merchantBuyerId,
   urlIpn,
+  cardSelectorData,
+  billingData,
+  appSettings,
 }) => {
+  const [isRendered, setIsRendered] = useState(false);
   const dispatch = useDispatch();
-  const { transactionId, orderNumber, token, status } = useSelector(
+  const { transactionId, orderNumber, token, signature, status } = useSelector(
     (state) => state.order
   );
 
-  // Generar transactionId y token cuando cambia algún valor del estado
-  useEffect(() => {
-    const { transactionId, orderNumber } = generateOrder();
-    dispatch(setOrder({ transactionId, orderNumber }));
+  // Function to fetch a fresh token
+  const fetchNewToken = (txId, reqOrderStr) => {
+    const activeCreds = 
+      configCurrency.currency === "PEN" 
+        ? appSettings?.credentials?.PEN 
+        : appSettings?.credentials?.USD;
 
     dispatch(
       fetchToken({
-        transactionId,
+        transactionId: txId,
         orderData: {
           requestSource: "ECOMMERCE",
           merchantCode: configCurrency.merchantCode,
-          orderNumber,
-          publicKey: "VErethUtraQuxas57wuMuquprADrAHAb",
+          orderNumber: reqOrderStr,
+          publicKey: activeCreds?.publicKey || "VErethUtraQuxas57wuMuquprADrAHAb",
           amount,
+          environment: appSettings?.environment || "sandbox",
         },
       })
     );
-  }, [
-    integrationMethod,
-    amount,
-    actionForm,
-    arrayMethodPay,
-    lenguageSelect,
-    appearance,
-    customData,
-    configCurrency,
-    processType,
-    cardToken,
-    merchantBuyerId,
-    urlIpn,
-    dispatch,
-  ]);
+  };
 
-  const handlePayment = () => {
-    const containerIframe = document.querySelector("#container-iframe");
-    if (integrationMethod.embebed)
-      containerIframe.style.backgroundColor = "white";
+  // Generar transactionId y token SOLO cuando cambian los campos que afectan al token
+  useEffect(() => {
+    setIsRendered(false); // Reiniciar el estado renderizado al cambiar params
+    const { transactionId, orderNumber } = generateOrder();
+    dispatch(setOrder({ transactionId, orderNumber }));
+    fetchNewToken(transactionId, orderNumber);
+  }, [amount, configCurrency, appSettings, dispatch]);
+
+  // Determinar el valor de action para el SDK
+  const getAction = () => {
+    if (actionForm.register) return window.Izipay.enums.payActions.REGISTER;
+    if (actionForm.payRegister) return window.Izipay.enums.payActions.PAY_REGISTER;
+    if (actionForm.payToken) return window.Izipay.enums.payActions.PAY_TOKEN;
+    if (actionForm.payCardSelector) return "pay_card_selector";
+    return window.Izipay.enums.payActions.PAY;
+  };
+
+  const handlePayment = async () => {
+    if (isRendered) {
+      // El usuario quiere recargar el formulario
+      const containerDOM = document.querySelector("#iframe-payment");
+      if (containerDOM) containerDOM.innerHTML = ""; // Limpiar iframe anterior
+
+      const { transactionId: newTxId, orderNumber: newOrderNumber } = generateOrder();
+      dispatch(setOrder({ transactionId: newTxId, orderNumber: newOrderNumber }));
+      fetchNewToken(newTxId, newOrderNumber);
+      
+      setIsRendered(false); // Volver al estado interactivo
+      return; // Detenemos aquí, Izipay se enlazará solo la próxima vez que den Clic al terminar de cargar el Token
+    }
 
     const paymentMessage = document.querySelector("#payment-message");
     const objetConfig = document.querySelector("#objet-config");
@@ -72,27 +91,50 @@ const PaymentButton = ({
       return;
     }
 
+    if (integrationMethod.embebed) {
+      container.style.backgroundColor = "white";
+    }
+
     if (!token || !window.Izipay) {
       console.error("Izipay no está cargado o el token es inválido.");
       return;
     }
 
+    const dateTimeTransaction = getCurrentTransactionTime();
+
+    // Si es pay_card_selector, generar la firma
+    let cardSelectorSignature = signature;
+    if (actionForm.payCardSelector) {
+      const activeCreds = 
+        configCurrency.currency === "PEN" 
+          ? appSettings?.credentials?.PEN 
+          : appSettings?.credentials?.USD;
+
+      const signatureResult = await dispatch(
+        fetchSignature({
+          dateTimeTransaction,
+          transactionId,
+          amount,
+          currency: configCurrency.currency,
+          merchantBuyerId,
+          documentType: billingData.documentType,
+          document: billingData.document,
+          hashKey: activeCreds?.hashKey || "Xom5Hlt9eSWoylYuBrenIbOsTljEdefR",
+        })
+      ).unwrap();
+      cardSelectorSignature = signatureResult.response.signature;
+    }
+
     const paymentConfig = {
       transactionId,
-      action: actionForm.register
-        ? window.Izipay.enums.payActions.REGISTER
-        : actionForm.payRegister
-        ? window.Izipay.enums.payActions.PAY_REGISTER
-        : actionForm.payToken
-        ? window.Izipay.enums.payActions.PAY_TOKEN
-        : window.Izipay.enums.payActions.PAY,
+      action: getAction(),
       merchantCode: configCurrency.merchantCode,
       order: {
         orderNumber,
         currency: configCurrency.currency,
         amount,
         merchantBuyerId,
-        dateTimeTransaction: getCurrentTransactionTime(),
+        dateTimeTransaction,
         payMethod:
           arrayMethodPay.length > 1
             ? arrayMethodPay.join(", ")
@@ -102,19 +144,7 @@ const PaymentButton = ({
       token: {
         cardToken,
       },
-      billing: {
-        firstName: "Daniel",
-        lastName: "Castañeda",
-        email: "jwick@izipay.pe",
-        phoneNumber: "989339999",
-        street: "calle el demo",
-        city: "lima",
-        state: "lima",
-        country: "PE",
-        postalCode: "00001",
-        document: "12345678",
-        documentType: window.Izipay.enums.documentType.DNI,
-      },
+      billing: billingData,
       language: {
         init: lenguageSelect.init,
         showControlMultiLang: lenguageSelect.control,
@@ -144,6 +174,11 @@ const PaymentButton = ({
         name: key,
         value,
       })),
+      ...(actionForm.payCardSelector && {
+        cardSelector: {
+          signature: cardSelectorSignature || "",
+        },
+      }),
     };
 
     console.log("🟢 Configuración enviada a Izipay:", paymentConfig);
@@ -166,19 +201,36 @@ const PaymentButton = ({
       keyRSA: "RSA",
       callbackResponse: callbackResponsePayment,
     });
+    
+    // Marcar como renderizado
+    setIsRendered(true);
+  };
+
+  // Dynamic button color based on theme
+  const getButtonBg = () => {
+    const hColor = appearance.hColor || "";
+    const match = hColor.match(/bg-\[([^\]]+)\]/);
+    return match ? match[1] : "#FF4240";
+  };
+
+  const getCurrencySymbol = () => {
+    return configCurrency.currency === "USD" ? "$" : "S/";
   };
 
   return (
     <button
       onClick={handlePayment}
-      className={`w-max ${appearance.hColor} py-1 px-4 text-base cursor-pointer hover:${appearance.hColor} rounded-sm hover:scale-95`}
+      className={`pay-button ${isRendered ? 'animate-pulse bg-emerald-500' : ''}`}
+      style={{ backgroundColor: isRendered ? '#10b981' : getButtonBg() }}
       disabled={status === "loading"}
     >
       {status === "loading"
-        ? "Loading..."
+        ? "⏳ Generando token..."
+        : isRendered
+        ? "🔄 Generar nuevo token de sesión"
         : amount === ""
         ? "Ingresar Monto"
-        : `${configCurrency.currency} ${amount} →`}
+        : `${getCurrencySymbol()} ${amount} →`}
     </button>
   );
 };
