@@ -89,7 +89,7 @@ const Checkout = ({ appSettings }) => {
   const [billingData, setBillingData] = useState({
     firstName: "Daniel",
     lastName: "Castañeda",
-    email: "jwick@izipay.pe",
+    email: "test@example.com",
     phoneNumber: "989339999",
     street: "calle el demo",
     city: "Lima",
